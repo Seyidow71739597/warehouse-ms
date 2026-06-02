@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------
+// MODELS (Veritabanı Tabloları)
+// ---------------------------------------------------------
+
+model Product {
+  id            String   @id @default(uuid())
+  name          String
+  barcode       String?  @unique
+  description   String?
+  price         Float    @default(0) 
+  buyPrice      Float    @default(0) 
+  stockQuantity Int      @default(0)
+  minStockLevel Int      @default(5)
+  unit          String   @default("PIECE")
+  image         String?  
+    
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  transactions  Transaction[]
+}
+
+model Partner {
+  id            String   @id @default(cuid())
+  type          String   @default("CUSTOMER")
+  name          String
+  contactPerson String?
+  phone         String?
+  email         String?
+  address       String?
+   
+  passportImage String?  
+  image         String?  
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  transactions  Transaction[]
+}
+
+model Transaction {
+  id        String   @id @default(uuid())
+  type      String   // "IN" (Giriş) veya "OUT" (Çıkış)
+  quantity  Int
+   
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+   
+  partnerId String?
+  partner   Partner? @relation(fields: [partnerId], references: [id])
+
+  userId    String?  
+  user      User?    @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model SystemSettings {
+  id          String   @id @default("default") 
+  companyName String   @default("Firma Adı")
+  phone       String   @default("")
+  updatedAt   DateTime @updatedAt
+}
+
+// --- KULLANICI VE GÜVENLİK SİSTEMİ ---
+// SQLite Enum desteklemediği için Role ve Status String yapıldı.
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  phone         String?  
+  password      String   
+    
+  name          String
+  age           Int?
+  jobTitle      String?    
+  passportImage String?    
+  image         String?   
+
+  role          String   @default("USER")
+  status        String   @default("PENDING") 
+    
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  transactions  Transaction[] 
+}
